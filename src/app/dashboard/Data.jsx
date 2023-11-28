@@ -7,6 +7,7 @@ import { Card } from 'antd';
 export default function Data() {
 
   const [loaded, setLoaded] = useState(false);
+  const [playerDetails, setPlayerDetails] = useState({});
   const [playerStats, setPlayerStats] = useState({});
   const fetchData = async () => {
     try {
