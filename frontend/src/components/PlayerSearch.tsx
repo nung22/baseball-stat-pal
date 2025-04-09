@@ -1,8 +1,12 @@
-// components/PlayerSearch.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+// Import Autocomplete and Loader
+import { Autocomplete, Loader, Text } from '@mantine/core';
+// Import useDebouncedCallback for debouncing API calls
+import { useDebouncedCallback } from 'use-debounce';
 import { searchPlayers } from '@/lib/api';
+import { capitalizeWords } from '@/lib/utils'; // Keep if needed for display elsewhere
 import { Player } from '@/types';
 
 interface PlayerSearchProps {
@@ -10,87 +14,105 @@ interface PlayerSearchProps {
 }
 
 export default function PlayerSearch({ onPlayerSelect }: PlayerSearchProps) {
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [players, setPlayers] = useState<Player[]>([]);
+  // State for the input value
+  const [value, setValue] = useState<string>('');
+  // State to store the full Player objects from the last successful search
+  const [playerResults, setPlayerResults] = useState<Player[]>([]);
+  // State for the formatted data array (strings) for Autocomplete suggestions
+  const [autocompleteData, setAutocompleteData] = useState<string[]>([]);
+  // Loading and error states
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (searchTerm.length < 2) {
-      setError('Please enter at least 2 characters');
+  // Debounced function to fetch players
+  const fetchPlayersDebounced = useDebouncedCallback(async (query: string) => {
+    if (query.length < 3) {
+      setAutocompleteData([]);
+      setPlayerResults([]);
+      setLoading(false);
+      setError(null); // Clear error if query becomes too short
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const results = await searchPlayers(searchTerm);
-      setPlayers(results);
-      
+      const results = await searchPlayers(query);
+      setPlayerResults(results); // Store full player objects
+
+      // Format results for Autocomplete (e.g., "First Last (ID)")
+      // Make sure this format is unique enough to identify the player later
+      const formattedData = results.map(
+        (p) => `${capitalizeWords(p.name_first + ' ' + p.name_last)} (${p.key_mlbam})`
+      );
+      setAutocompleteData(formattedData);
+
       if (results.length === 0) {
-        setError('No players found. Try another name.');
+        setError('No players found matching that name.');
+        // Keep showing potentially empty dropdown or hide it based on UX preference
+        // setAutocompleteData([]); // Option: clear suggestions if API returns none
       }
     } catch (err) {
       console.error(err);
       setError('Failed to search players. Please try again.');
+      setAutocompleteData([]); // Clear suggestions on error
+      setPlayerResults([]);
     } finally {
       setLoading(false);
+    }
+  }, 500); // Debounce time in milliseconds (e.g., 500ms)
+
+  // Effect to call the debounced fetch function when the input value changes
+  useEffect(() => {
+    fetchPlayersDebounced(value);
+    // Cancel the debounce timer if the component unmounts or value changes quickly
+    return fetchPlayersDebounced.cancel;
+  }, [value, fetchPlayersDebounced]);
+
+  // Handler when an option is selected from the Autocomplete dropdown
+  const handleOptionSubmit = (selectedValue: string) => {
+    // Find the full Player object corresponding to the selected string value
+    const selectedPlayer = playerResults.find(
+      (p) => `${capitalizeWords(p.name_first + ' ' + p.name_last)} (${p.key_mlbam})` === selectedValue
+    );
+
+    if (selectedPlayer) {
+      onPlayerSelect(selectedPlayer);
+      // Optionally clear the input and results after selection
+      setValue('');
+      setAutocompleteData([]);
+      setPlayerResults([]);
+      setError(null);
+    } else {
+        // Handle case where the selected value doesn't match any player (should be rare)
+        setError('Could not find selected player details.');
+        console.warn("Selected value didn't match any player in results:", selectedValue, playerResults);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={handleSearch} className="mb-4">
-        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search players (e.g., Aaron Judge)"
-            className="w-full px-4 py-2 focus:outline-none"
-          />
-          <button 
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition"
-            disabled={loading}
-          >
-            {loading ? 'Searching...' : 'Search'}
-          </button>
-        </div>
-      </form>
-      
-      {error && (
-        <div className="text-red-500 mb-4">{error}</div>
-      )}
-      
-      {players.length > 0 && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-3 bg-gray-100 font-medium">
-            Found {players.length} players
-          </div>
-          <ul className="divide-y divide-gray-200">
-            {players.map((player) => (
-              <li 
-                key={player.key_mlbam} 
-                className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition"
-                onClick={() => onPlayerSelect(player)}
-              >
-                <div className="font-medium">{player.name_first} {player.name_last}</div>
-                <div className="text-sm text-gray-500">
-                  {player.team_id && `Team: ${player.team_id}`}
-                  {player.position && ` • Position: ${player.position}`}
-                </div>
-                <div className="text-xs text-gray-400">
-                  Player ID: {player.key_mlbam}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+    // Using a simple div or Stack wrapper, removed the form/button
+    <div>
+      <Autocomplete
+        label="Search Players"
+        placeholder="Start typing a player name (e.g., Aaron Judge)"
+        value={value}
+        onChange={setValue} // Update state on every keystroke
+        onOptionSubmit={handleOptionSubmit} // Handle selection
+        data={autocompleteData} // Provide suggestions
+        limit={10} // Limit the number of suggestions shown
+        radius="md"
+        rightSection={loading ? <Loader size="1rem" /> : null} // Show loader when fetching
+        error={error} // Display error message directly on the component
+        // Clear error when user starts typing again in a valid way
+        onFocus={() => { if (value.length >= 3) setError(null); } }
+        // Ensure dropdown closes if input is cleared manually
+        onBlur={() => { if(value === '') setAutocompleteData([]); } }
+        comboboxProps={{ transitionProps: { transition: 'pop', duration: 200 } }} // Optional: Nice transition
+      />
+      {/* You might still want a general error message area if needed */}
+      {/* {error && !loading && <Text c="red.5" size="sm" mt="xs">{error}</Text>} */}
     </div>
   );
 }

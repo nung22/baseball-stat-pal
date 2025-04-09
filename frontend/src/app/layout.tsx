@@ -1,11 +1,13 @@
-// app/layout.tsx
-import { Metadata } from 'next';
-import './globals.css';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Fantasy Baseball Stats',
-  description: 'Baseball statistics for fantasy baseball analysis',
-};
+import '@mantine/core/styles.css';
+// import { Metadata } from 'next';
+import { MantineProvider, AppShell, Title, Text, Container} from '@mantine/core';
+
+// export const metadata: Metadata = {
+//   title: 'Fantasy Baseball Stats',
+//   description: 'Baseball statistics for fantasy baseball analysis',
+// };
 
 export default function RootLayout({
   children,
@@ -15,25 +17,36 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <header className="bg-blue-600 text-white">
-          <div className="container mx-auto px-4 py-6">
-            <h1 className="text-3xl font-bold">Fantasy Baseball Stats</h1>
-            <p className="mt-2">Powered by pybaseball</p>
-          </div>
-        </header>
-        
-        <main className="container mx-auto px-4 py-8">
-          {children}
-        </main>
-        
-        <footer className="bg-white border-t border-gray-200 mt-12">
-          <div className="container mx-auto px-4 py-6 text-center text-gray-500">
-            <p>&copy; {new Date().getFullYear()} Fantasy Baseball Stats</p>
-            <p className="text-sm mt-2">
-              Data provided by pybaseball. All stats belong to MLB, FanGraphs, and Baseball Savant.
-            </p>
-          </div>
-        </footer>
+        <MantineProvider defaultColorScheme='dark'>
+          <AppShell
+            header={{ height: 80 }}
+            footer={{ height: 60 }}
+          >
+            <AppShell.Header p="md">
+              <Container size="lg">
+                <Title order={1} size="h3" fw={700}>Fantasy Baseball Stats</Title>
+                <Text size="sm" c="blue.4">Powered by pybaseball</Text>
+              </Container>
+            </AppShell.Header>
+            
+            <AppShell.Main pt="6rem" mb="1rem">
+              <Container size="lg">
+                {children}
+              </Container>
+            </AppShell.Main>
+            
+            <AppShell.Footer p="md">
+              <Container size="lg">
+                <Text ta="center" size="xs" c="dimmed">
+                  &copy; {new Date().getFullYear()} Fantasy Baseball Stats
+                </Text>
+                <Text ta="center" size="xs" c="dimmed">
+                  Data provided by pybaseball. All stats belong to MLB, FanGraphs, and Baseball Savant.
+                </Text>
+              </Container>
+            </AppShell.Footer>
+          </AppShell>
+        </MantineProvider>
       </body>
     </html>
   );

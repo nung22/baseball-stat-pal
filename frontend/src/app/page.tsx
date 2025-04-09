@@ -1,28 +1,26 @@
-// app/page.tsx
 'use client';
 
 import { useState } from 'react';
-import PlayerSearch from '../components/PlayerSearch';
-import PlayerStats from '../components/PlayerStats';
+import { Grid, Paper, Title } from '@mantine/core';
+import PlayerSearch from '@/components/PlayerSearch';
+import PlayerStats from '@/components/PlayerStats';
 import { Player } from '@/types';
 
 export default function Home() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Player Search</h2>
-            <PlayerSearch onPlayerSelect={setSelectedPlayer} />
-          </div>
-        </div>
-        
-        <div className="lg:col-span-2">
-          <PlayerStats player={selectedPlayer} />
-        </div>
-      </div>
-    </div>
+    <Grid gutter="lg">
+      <Grid.Col span={{ base: 12, md: 4 }}>
+        <Paper bg="dark.7" h="100%">
+          <Title order={3} mb="md" c="blue.4">Player Search</Title>
+          <PlayerSearch onPlayerSelect={setSelectedPlayer} />
+        </Paper>
+      </Grid.Col>
+      
+      <Grid.Col span={{ base: 12, md: 8 }}>
+        <PlayerStats player={selectedPlayer} />
+      </Grid.Col>
+    </Grid>
   );
 }
