@@ -1,5 +1,13 @@
+# Core Flask App
 flask==2.3.3
 flask-cors==4.0.0
+
+# Data Handling
 pybaseball
 pandas>=2.2.0
+
+# Deployment (Keep if deploying with Gunicorn)
 gunicorn==21.2.0
+
+# Optional Utility (Keep if using .env files)
+python-dotenv
