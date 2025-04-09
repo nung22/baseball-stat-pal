@@ -160,8 +160,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
           <Stack gap={0}>
             <Text size="xl" fw={700}>{capitalizeWords(player.name_first + " " + player.name_last)}</Text>
             <Image
-              h={50}
-              w="auto"
+              style={{  width: '80px', height: 'auto' }}
               radius="md"
               // Use curly braces {} to signal a JS expression for the prop value
               // Use backticks `` for the template literal string
@@ -215,7 +214,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
             />
             
           {/* Percentile Sliders */}
-          <Grid gutter="0rem">
+          <Grid gutter="7px">
             {getFilteredMetrics().map(key => {
               // Skip rendering slider for 'year'
               if (key === 'year' || key === 'player_id') return null;
@@ -242,13 +241,13 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
                     <Slider
                       flex={1}
                       disabled={notAvailable}
-                      thumbChildren={<Text size="8px" fw={800}>{value}</Text>}
+                      thumbChildren={<Text size="7px" fw={900}>{value}</Text>}
                       value={value}
                       showLabelOnHover={false}
                       color={color}
                       thumbSize={25}
-                      radius="xl"
-                      size="1rem"
+                      radius="lg"
+                      size="lg"
                     />
                   </Flex>
                 </Grid.Col>
